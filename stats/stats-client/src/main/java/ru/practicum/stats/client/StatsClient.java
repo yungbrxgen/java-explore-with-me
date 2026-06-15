@@ -1,6 +1,9 @@
 package ru.practicum.stats.client;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -15,14 +18,16 @@ import java.util.List;
 
 
 @Service
+@Slf4j
 public class StatsClient {
 
     private final RestTemplate restTemplate;
     private final String serverUrl;
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    public StatsClient(@Value("${stats-server.url}") String serverUrl) {
-        this.restTemplate = new RestTemplate();
+    @Autowired
+    public StatsClient(@Value("${stats-server.url}") String serverUrl, RestTemplateBuilder builder) {
+        this.restTemplate = builder.build();
         this.serverUrl = serverUrl;
     }
 
@@ -39,14 +44,14 @@ public class StatsClient {
                     Void.class
             );
         } catch (Exception e) {
-            System.err.println("Ошибка при отправке статистики на сервер: " + e.getMessage());
+            log.error("Ошибка при отправке статистики на сервер: {}", e.getMessage(), e);
         }
     }
 
     public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(serverUrl + "/stats")
-                .queryParam("start", start.format(formatter))
-                .queryParam("end", end.format(formatter))
+                .queryParam("start", start.format(FORMATTER))
+                .queryParam("end", end.format(FORMATTER))
                 .queryParam("unique", unique);
 
         if (uris != null && !uris.isEmpty()) {
@@ -70,7 +75,7 @@ public class StatsClient {
             );
             return response.getBody();
         } catch (Exception e) {
-            System.err.println("Ошибка при получении статистики с сервера: " + e.getMessage());
+            log.error("Ошибка при получении статистики с сервера: {}", e.getMessage(), e);
             return List.of();
         }
     }
