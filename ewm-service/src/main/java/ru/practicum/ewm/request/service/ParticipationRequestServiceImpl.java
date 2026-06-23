@@ -119,34 +119,42 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
         Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " and initiator=" + userId + " was not found"));
 
+        List<ParticipationRequest> requests = requestRepository.findByIdIn(updateRequest.getRequestIds());
+
+        for (ParticipationRequest request : requests) {
+            if (request.getStatus() != RequestStatus.PENDING) {
+                throw new ConflictException("Status can only be updated for PENDING requests");
+            }
+        }
+
+        List<ParticipationRequestDto> confirmed = new ArrayList<>();
+        List<ParticipationRequestDto> rejected = new ArrayList<>();
+
+        if (updateRequest.getStatus() == RequestStatus.REJECTED) {
+            for (ParticipationRequest request : requests) {
+                request.setStatus(RequestStatus.REJECTED);
+                requestRepository.save(request);
+                rejected.add(requestMapper.toRequestDto(request));
+            }
+            return EventRequestStatusUpdateResult.builder()
+                    .confirmedRequests(confirmed)
+                    .rejectedRequests(rejected)
+                    .build();
+        }
+
         long confirmedCount = requestRepository.countByEventIdAndStatus(eventId, RequestStatus.CONFIRMED);
 
         if (event.getParticipantLimit() > 0 && confirmedCount >= event.getParticipantLimit()) {
             throw new ConflictException("The participant limit has been reached");
         }
 
-        List<ParticipationRequest> requests = requestRepository.findByIdIn(updateRequest.getRequestIds());
-
-        List<ParticipationRequestDto> confirmed = new ArrayList<>();
-        List<ParticipationRequestDto> rejected = new ArrayList<>();
-
         for (ParticipationRequest request : requests) {
-            if (request.getStatus() != RequestStatus.PENDING) {
-                throw new ConflictException("Status can only be updated for PENDING requests");
-            }
-
-            if (updateRequest.getStatus() == RequestStatus.CONFIRMED) {
-                if (event.getParticipantLimit() == 0 || confirmedCount < event.getParticipantLimit()) {
-                    request.setStatus(RequestStatus.CONFIRMED);
-                    confirmedCount++;
-                    requestRepository.save(request);
-                    confirmed.add(requestMapper.toRequestDto(request));
-                } else {
-                    request.setStatus(RequestStatus.REJECTED);
-                    requestRepository.save(request);
-                    rejected.add(requestMapper.toRequestDto(request));
-                }
-            } else if (updateRequest.getStatus() == RequestStatus.REJECTED) {
+            if (event.getParticipantLimit() == 0 || confirmedCount < event.getParticipantLimit()) {
+                request.setStatus(RequestStatus.CONFIRMED);
+                confirmedCount++;
+                requestRepository.save(request);
+                confirmed.add(requestMapper.toRequestDto(request));
+            } else {
                 request.setStatus(RequestStatus.REJECTED);
                 requestRepository.save(request);
                 rejected.add(requestMapper.toRequestDto(request));
@@ -158,4 +166,5 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
                 .rejectedRequests(rejected)
                 .build();
     }
+
 }

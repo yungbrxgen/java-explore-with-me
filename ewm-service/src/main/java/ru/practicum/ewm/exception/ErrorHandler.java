@@ -87,4 +87,17 @@ public class ErrorHandler {
                 .timestamp(LocalDateTime.now().format(FORMATTER))
                 .build();
     }
+
+    @ExceptionHandler(BadRequestException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleBadRequestException(final BadRequestException e) {
+        log.error("400 Bad Request: {}", e.getMessage());
+        return ApiError.builder()
+                .status(HttpStatus.BAD_REQUEST.name())
+                .reason("Incorrectly made request.")
+                .message(e.getMessage())
+                .timestamp(LocalDateTime.now().format(FORMATTER))
+                .build();
+    }
+
 }
