@@ -113,7 +113,7 @@ public class EventServiceImpl implements EventService {
 
         if (request.getEventDate() != null) {
             if (request.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-                throw new ru.practicum.ewm.exception.BadRequestException("Event date must be at least 2 hours in the future");
+                throw new BadRequestException("Event date must be at least 2 hours in the future");
             }
             event.setEventDate(request.getEventDate());
         }
@@ -155,7 +155,7 @@ public class EventServiceImpl implements EventService {
 
         if (rangeStart != null && rangeEnd != null) {
             if (rangeStart.isAfter(rangeEnd)) {
-                throw new ru.practicum.ewm.exception.BadRequestException("rangeStart cannot be after rangeEnd");
+                throw new BadRequestException("rangeStart cannot be after rangeEnd");
             }
             spec = spec.and(EventSpecifications.isWithinDates(rangeStart, rangeEnd));
         } else {
@@ -183,7 +183,7 @@ public class EventServiceImpl implements EventService {
 
         if (request.getEventDate() != null) {
             if (request.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) {
-                throw new ConflictException("Event date must be at least 1 hour in the future for admin");
+                throw new BadRequestException("Event date must be at least 1 hour in the future for admin");
             }
             event.setEventDate(request.getEventDate());
         }
