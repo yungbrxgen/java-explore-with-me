@@ -1,0 +1,344 @@
+{
+  "info": {
+    "_postman_id": "explore-with-me-comments-test",
+    "name": "EWM Comments API Tests",
+    "description": "Автотесты для дополнительной функциональности 'Комментарии'",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Подготовка: Создать автора события",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
+              "var jsonData = pm.response.json();",
+              "pm.environment.set(\"commentAuthorId\", jsonData.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Организатор Иван\",\n  \"email\": \"ivan.org@mail.ru\"\n}"
+        },
+        "url": { "raw": "http://localhost:8080/admin/users", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["admin", "users"] }
+      }
+    },
+    {
+      "name": "Подготовка: Создать читателя (комментатора)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
+              "var jsonData = pm.response.json();",
+              "pm.environment.set(\"commentatorId\", jsonData.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Алексей Комментатор\",\n  \"email\": \"alex.comm@mail.ru\"\n}"
+        },
+        "url": { "raw": "http://localhost:8080/admin/users", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["admin", "users"] }
+      }
+    },
+    {
+      "name": "Подготовка: Создать категорию",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
+              "var jsonData = pm.response.json();",
+              "pm.environment.set(\"commentCatId\", jsonData.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Комментарии Категория\"\n}"
+        },
+        "url": { "raw": "http://localhost:8080/admin/categories", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["admin", "categories"] }
+      }
+    },
+    {
+      "name": "Подготовка: Создать событие",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
+              "var jsonData = pm.response.json();",
+              "pm.environment.set(\"commentEventId\", jsonData.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"annotation\": \"Событие для тестирования новой фичи комментариев\",\n  \"category\": {{commentCatId}},\n  \"description\": \"Полное описание события, которое мы будем активно комментировать на третьем этапе проекта.\",\n  \"eventDate\": \"2026-12-31 18:00:00\",\n  \"location\": {\n    \"lat\": 55.7512,\n    \"lon\": 37.6184\n  },\n  \"paid\": false,\n  \"participantLimit\": 0,\n  \"requestModeration\": false,\n  \"title\": \"Тестовое событие\"\n}"
+        },
+        "url": { "raw": "http://localhost:8080/users/{{commentAuthorId}}/events", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["users", "{{commentAuthorId}}", "events"] }
+      }
+    },
+    {
+      "name": "Подготовка: Опубликовать событие",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"stateAction\": \"PUBLISH_EVENT\"\n}"
+        },
+        "url": { "raw": "http://localhost:8080/admin/events/{{commentEventId}}", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["admin", "events", "{{commentEventId}}"] }
+      }
+    },
+    {
+      "name": "Комментарии: Написать комментарий 1",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
+              "var jsonData = pm.response.json();",
+              "pm.test(\"Comment text is correct\", function () { pm.expect(jsonData.text).to.eql(\"Это потрясающее событие! Обязательно приду.\"); });",
+              "pm.environment.set(\"commentId1\", jsonData.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"Это потрясающее событие! Обязательно приду.\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/users/{{commentatorId}}/comments?eventId={{commentEventId}}",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["users", "{{commentatorId}}", "comments"],
+          "query": [
+            { "key": "eventId", "value": "{{commentEventId}}" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Комментарии: Написать комментарий 2 (для удаления админом)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () { pm.response.to.have.status(201); });",
+              "var jsonData = pm.response.json();",
+              "pm.environment.set(\"commentId2\", jsonData.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"Этот комментарий содержит спам и будет удален модератором.\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/users/{{commentatorId}}/comments?eventId={{commentEventId}}",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["users", "{{commentatorId}}", "comments"],
+          "query": [
+            { "key": "eventId", "value": "{{commentEventId}}" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Комментарии: Публичный просмотр комментариев к событию",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+              "var jsonData = pm.response.json();",
+              "pm.test(\"Returns list of comments\", function () { pm.expect(jsonData.length).to.be.at.least(2); });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/events/{{commentEventId}}/comments?from=0&size=10",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["events", "{{commentEventId}}", "comments"],
+          "query": [
+            { "key": "from", "value": "0" },
+            { "key": "size", "value": "10" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Комментарии: Редактировать свой комментарий",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+              "var jsonData = pm.response.json();",
+              "pm.test(\"Text is updated successfully\", function () { pm.expect(jsonData.text).to.eql(\"Обновленный текст: событие просто супер!\"); });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"Обновленный текст: событие просто супер!\"\n}"
+        },
+        "url": { "raw": "http://localhost:8080/users/{{commentatorId}}/comments/{{commentId1}}", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["users", "{{commentatorId}}", "comments", "{{commentId1}}"] }
+      }
+    },
+    {
+      "name": "Комментарии: Поиск комментариев Администратором (модерация)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () { pm.response.to.have.status(200); });",
+              "var jsonData = pm.response.json();",
+              "pm.test(\"Finds spam comment\", function () { pm.expect(jsonData.length).to.be.at.least(1); });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/admin/comments?text=спам&from=0&size=10",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["admin", "comments"],
+          "query": [
+            { "key": "text", "value": "спам" },
+            { "key": "from", "value": "0" },
+            { "key": "size", "value": "10" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Комментарии: Удалить спам комментарий Администратором",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 204\", function () { pm.response.to.have.status(204); });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": { "raw": "http://localhost:8080/admin/comments/{{commentId2}}", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["admin", "comments", "{{commentId2}}"] }
+      }
+    },
+    {
+      "name": "Комментарии: Удалить комментарий пользователем",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 204\", function () { pm.response.to.have.status(204); });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": { "raw": "http://localhost:8080/users/{{commentatorId}}/comments/{{commentId1}}", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["users", "{{commentatorId}}", "comments", "{{commentId1}}"] }
+      }
+    }
+  ]
+}
